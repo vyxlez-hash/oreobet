@@ -26,7 +26,7 @@ type AuthState = {
 const AuthContext = createContext<AuthState | null>(null);
 
 function avatarFor(id: string) {
-  return `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(id.replaceAll("-", ""))}`;
+  return `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(id.replace(/-/g, ""))}`;
 }
 
 async function ensureProfile(user: User): Promise<Profile> {
@@ -60,7 +60,7 @@ async function ensureProfile(user: User): Promise<Profile> {
     .from("profiles")
     .insert({
       id: user.id,
-      username: `${base}_${user.id.replaceAll("-", "").slice(0, 5)}`.slice(0, 20),
+      username: `${base}_${user.id.replace(/-/g, "").slice(0, 5)}`.slice(0, 20),
       balance: 0,
       level: 1,
       verified: false,
