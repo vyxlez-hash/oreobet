@@ -1,3 +1,0 @@
-import { Shield, UserRound } from "lucide-react";
-import { PageTitle } from "../App";
-export function ProfilePage(){return <section><PageTitle eyebrow="ACCOUNT" title="Profile" sub="Manage your account and security."/><div className="profile-grid"><div className="panel profile-card"><div className="avatar giant">O</div><h2>Onyx</h2><span className="badge"><Shield size={13}/> Verified</span></div><div className="panel settings"><div><strong>Account security</strong><p className="muted">2FA and active sessions</p></div><button className="secondary-btn">Manage</button><div><strong>Notifications</strong><p className="muted">Game and transaction updates</p></div><button className="secondary-btn">Configure</button></div></div></section>}

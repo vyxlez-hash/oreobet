@@ -1,2 +1,0 @@
-import { Link } from "react-router-dom";
-export function LoginPage(){return <div className="auth-page"><div className="auth-card"><div className="brand centered"><img src="/logo.png"/><span>OREOBET</span></div><h1>Welcome back</h1><p className="muted">Sign in to continue.</p><input className="large-input" placeholder="Email"/><input className="large-input" type="password" placeholder="Password"/><button className="primary-btn full">Sign in</button><Link to="/" className="muted centered-link">Back home</Link></div></div>}
