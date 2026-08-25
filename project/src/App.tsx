@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import {
-  Activity, ArrowDownToLine, ArrowUpFromLine, Bell, ChevronRight,
-  CircleDollarSign, Coins, Gamepad2, Gauge, Gift, LayoutDashboard,
-  LogOut, Menu, MessageCircle, Shield, Spade, Trophy, UserRound, X
+  Activity, ArrowDownToLine, Bell, CircleDollarSign, Coins, Gamepad2,
+  Gauge, LogOut, Menu, MessageCircle, Shield, Spade,
+  Trophy, UserRound, X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { HomePage } from "./pages/Home";
 import { GamesPage } from "./pages/Games";
 import { WalletPage } from "./pages/Wallet";
@@ -16,7 +17,7 @@ import { GamePage } from "./pages/Game";
 import { useDemoStore } from "./store/demo";
 import { useAuth } from "./store/auth";
 
-const nav = [
+const nav: Array<[string, string, LucideIcon]> = [
   ["/", "Home", Gauge],
   ["/games", "Casino", Gamepad2],
   ["/games/crash", "Crash", Activity],
@@ -63,7 +64,7 @@ function Layout() {
       <main className="main">
         <header className="topbar">
           <button className="icon-btn mobile-menu" onClick={() => setOpen(!open)}>
-            {open ? <X size={19}/> : <Menu size={19}/>}
+            {open ? <X size={19}/> : <Menu size={19}/>} 
           </button>
           <div className="topbar-spacer" />
           <button className="balance-pill" onClick={() => location.href="/wallet"}>
