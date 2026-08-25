@@ -1,0 +1,3 @@
+import { Chat } from "../components/Chat";
+import { RainEvent } from "../components/RainEvent";
+export function ChatPage(){ return <section className="chat-page"><div className="chat-main"><div className="eyebrow">COMMUNITY</div><h1>Live chat</h1><p className="muted">Talk, tip, and follow realtime game activity.</p><RainEvent/><div className="chat-wrap"><Chat/></div></div><div className="panel activity-panel"><div className="panel-title">Live bets</div>{["Nova · Crash · 2.41x","Kairo · Roulette · 21","Mira · Blackjack · WIN","Zen · Mines · 1.82x"].map(x=><div className="activity-row" key={x}><span className="live-dot"/>{x}</div>)}</div></section> }
