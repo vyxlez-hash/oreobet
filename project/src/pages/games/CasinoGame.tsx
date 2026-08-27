@@ -57,7 +57,7 @@ export function CasinoGame({ gameId }: { gameId: Exclude<GameId,'dice'> }) {
   };
   const joinCoinMatch=async(id:string)=>{
     if(!user){openAuth('signup');return;} setCoinLoading(true); const {data,error}=await supabase.rpc('join_coinflip_match',{p_match:id});
-    if(error){showToast(error.message);return;} await refreshBalance(); await loadCoinMatches(); setResult(data); showToast(data.winner_id===user.id?'You won the PvP coinflip!':'You lost the PvP coinflip.'); window.setTimeout(()=>setCoinLoading(false),1800);
+    if(error){setCoinLoading(false);showToast(error.message);return;} await refreshBalance(); await loadCoinMatches(); setResult(data); showToast(data.winner_id===user.id?'You won the PvP coinflip!':'You lost the PvP coinflip.'); window.setTimeout(()=>setCoinLoading(false),1800);
   };
   const cancelCoinMatch=async(id:string)=>{setCoinLoading(true);const {error}=await supabase.rpc('cancel_coinflip_match',{p_match:id});setCoinLoading(false);if(error)showToast(error.message);else{await refreshBalance();await loadCoinMatches();showToast('Coinflip cancelled and refunded.')}};
 
@@ -82,11 +82,18 @@ export function CasinoGame({ gameId }: { gameId: Exclude<GameId,'dice'> }) {
       const id=window.setInterval(()=>{const left=Math.max(0,Math.ceil((end-Date.now())/1000));setRouletteTimer(left);if(left<=0){clearInterval(id);setRoulettePhase('betting');setRouletteTimer(5);}},250);
     },4300);
   };
+
+  // Initialize roulette only when entering the roulette page. Do not depend on
+  // phase/busy here: doing so reset the phase after every state transition and
+  // made the reel/name visibly jump or slide back to the beginning.
   useEffect(()=>{
     if(gameId!=='roulette')return;
-    setRoulettePhase('betting');setRouletteTimer(5);
-    return undefined;
-  },[gameId,rouletteBusy,roulettePhase]);
+    setRoulettePhase('betting');
+    setRouletteTimer(5);
+    setRouletteBusy(false);
+    setRouletteArmed(false);
+  },[gameId]);
+
   useEffect(()=>{
     if(gameId!=='roulette'||roulettePhase!=='betting')return;
     setRouletteTimer(5);
@@ -102,7 +109,7 @@ export function CasinoGame({ gameId }: { gameId: Exclude<GameId,'dice'> }) {
     <div className="flex items-center gap-4 mb-10"><div className="w-14 h-14 rounded-2xl glass flex items-center justify-center"><GameIcon gameId={gameId}/></div><div><h1 className="text-3xl font-bold text-white">{game.name}</h1><p className="text-ink-300 text-sm">{game.description}</p></div></div>
     <div className="grid lg:grid-cols-3 gap-6">
       <Card className="lg:col-span-2 p-6 md:p-8 min-h-[560px] flex flex-col overflow-hidden"><div className="flex-1 flex flex-col items-center justify-center relative">
-        {gameId==='roulette'&&<RouletteVisual key={rouletteTick} busy={rouletteBusy} outcome={rouletteOutcome} target={rouletteTarget} phase={roulettePhase} timer={rouletteTimer}/>} 
+        {gameId==='roulette'&&<RouletteVisual busy={rouletteBusy} outcome={rouletteOutcome} target={rouletteTarget} phase={roulettePhase} timer={rouletteTimer}/>} 
         {gameId==='blackjack'&&<BlackjackVisual hand={bjHand} busy={busy}/>} 
         {gameId==='crash'&&<CrashVisual running={crashRunning} x={crashX} result={result}/>} 
         {gameId==='coinflip'&&<CoinVisual busy={coinLoading} result={result}/>} 
