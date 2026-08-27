@@ -28,7 +28,8 @@ export function GameGrid({ limit }: { limit?: number }) {
             key={game.id}
             hover
             className={cn(
-              'group relative overflow-hidden p-6 cursor-pointer animate-fade-in-up',
+              'game-card relative overflow-hidden p-6 cursor-pointer animate-fade-in-up',
+              `game-card-${game.id}`,
               hovered === game.id && 'scale-[1.02]'
             )}
           >
@@ -44,8 +45,8 @@ export function GameGrid({ limit }: { limit?: number }) {
               onMouseLeave={() => setHovered(null)}
             >
               <div className="flex items-start justify-between mb-6">
-                <div className="w-14 h-14 rounded-2xl glass flex items-center justify-center transition-all duration-500 group-hover:rotate-6 group-hover:scale-110">
-                  <Icon className="w-7 h-7 text-white" />
+                <div className="game-card-icon w-14 h-14 rounded-2xl glass flex items-center justify-center transition-all duration-500 group-hover:rotate-6 group-hover:scale-110">
+                  <Icon className="w-7 h-7 text-white transition-transform duration-500 group-hover:scale-110" />
                 </div>
                 <Badge>
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -70,7 +71,7 @@ export function GameGrid({ limit }: { limit?: number }) {
               </div>
 
               <Button className="w-full group/btn" onClick={() => handlePlay(game)}>
-                <Icons.Play className="w-4 h-4 transition-transform group-hover/btn:scale-125" />
+                <Icons.Play className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1 group-hover/btn:scale-110" />
                 PLAY
               </Button>
             </div>
