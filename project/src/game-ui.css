@@ -1,0 +1,104 @@
+/* OREOBET game-first visual layer. UI/animation only; game settlement remains server-side. */
+.game-card {
+  isolation: isolate;
+  transform: translateZ(0);
+  transition: transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s ease, box-shadow .28s ease;
+}
+.game-card::before {
+  content: '';
+  position: absolute;
+  inset: -45%;
+  z-index: -2;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(91,209,255,.14), transparent 58%);
+  transform: translate3d(-12%, 8%, 0) scale(.8);
+  transition: opacity .4s ease, transform .7s cubic-bezier(.2,.8,.2,1);
+  pointer-events: none;
+}
+.game-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: linear-gradient(120deg, transparent 15%, rgba(255,255,255,.07) 48%, transparent 72%);
+  transform: translateX(-110%);
+  pointer-events: none;
+}
+.game-card:hover { transform: translateY(-7px) scale(1.012); box-shadow: 0 24px 70px rgba(0,0,0,.32), 0 0 35px rgba(91,209,255,.07); }
+.game-card:hover::before { opacity: 1; transform: translate3d(12%, -8%, 0) scale(1.05); }
+.game-card:hover::after { opacity: 1; animation: game-card-sweep .9s ease both; }
+
+@keyframes game-card-sweep { to { transform: translateX(110%); } }
+
+.game-card-icon { position: relative; overflow: hidden; }
+.game-card-icon::after {
+  content: '';
+  position: absolute;
+  width: 140%; height: 40%;
+  left: -20%; top: -70%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.22), transparent);
+  transform: rotate(18deg);
+  transition: top .55s ease;
+}
+.game-card:hover .game-card-icon::after { top: 125%; }
+
+.game-card-dice::before { background: radial-gradient(circle, rgba(99,179,255,.18), transparent 58%); }
+.game-card-crash::before { background: radial-gradient(circle at 65% 65%, rgba(255,176,76,.17), transparent 58%); }
+.game-card-roulette::before { background: radial-gradient(circle, rgba(255,91,116,.16), transparent 58%); }
+.game-card-blackjack::before { background: radial-gradient(circle, rgba(126,255,177,.14), transparent 58%); }
+.game-card-coinflip::before { background: radial-gradient(circle, rgba(255,222,100,.16), transparent 58%); }
+.game-card-mines::before { background: radial-gradient(circle, rgba(183,125,255,.17), transparent 58%); }
+
+.game-showcase {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+  background: linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.018));
+  border: 1px solid rgba(255,255,255,.09);
+  box-shadow: 0 30px 90px rgba(0,0,0,.28);
+}
+.game-showcase::before,
+.game-showcase::after {
+  content: '';
+  position: absolute;
+  width: 420px; height: 420px;
+  border-radius: 50%;
+  filter: blur(10px);
+  pointer-events: none;
+}
+.game-showcase::before { right: -180px; top: -220px; background: radial-gradient(circle, rgba(73,201,255,.12), transparent 68%); animation: ambient-orb 8s ease-in-out infinite; }
+.game-showcase::after { left: -220px; bottom: -260px; background: radial-gradient(circle, rgba(164,108,255,.09), transparent 68%); animation: ambient-orb 10s ease-in-out infinite reverse; }
+@keyframes ambient-orb { 50% { transform: translate(-18px, 22px) scale(1.08); } }
+
+/* More dimensional roulette without forcing a constantly-running transform. */
+.roulette-stage { filter: drop-shadow(0 24px 35px rgba(0,0,0,.28)); }
+.roulette-stage::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 0 50px rgba(91,209,255,.06), inset 0 0 35px rgba(91,209,255,.04);
+  pointer-events: none;
+}
+.roulette-wheel { border-color: rgba(96,209,255,.28) !important; box-shadow: 0 0 0 5px rgba(255,255,255,.035), 0 22px 55px rgba(0,0,0,.48), 0 0 55px rgba(70,190,255,.08), inset 0 0 30px rgba(0,0,0,.6) !important; }
+.roulette-center { background: radial-gradient(circle at 35% 28%, #23404b, #071014 68%) !important; border-color: rgba(108,219,255,.22) !important; box-shadow: inset 0 0 24px rgba(0,0,0,.85), 0 0 28px rgba(74,200,255,.08) !important; }
+.roulette-pointer { filter: drop-shadow(0 0 10px rgba(120,220,255,.55)) drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
+
+.coin-scene { filter: drop-shadow(0 22px 32px rgba(0,0,0,.35)); }
+.coin-playing .coin-face { box-shadow: inset 0 0 0 3px rgba(255,255,255,.45), inset 0 -15px 25px rgba(0,0,0,.3), 0 0 35px rgba(255,220,100,.13), 0 20px 45px rgba(0,0,0,.35); }
+
+.blackjack-table { background: radial-gradient(ellipse at 50% 40%, rgba(31,102,76,.25), rgba(5,20,17,.55) 72%) !important; border-color: rgba(88,214,154,.18) !important; box-shadow: inset 0 0 70px rgba(0,0,0,.3), 0 25px 60px rgba(0,0,0,.28) !important; }
+
+/* Crash/mines game surfaces get motion without layout shifts. */
+.crash-visual, .mines-grid { transform: translateZ(0); }
+.crash-visual { animation: game-float 3.5s ease-in-out infinite; }
+@keyframes game-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+.game-result-glow { animation: result-ring 1.2s ease-out both; }
+@keyframes result-ring { 0% { filter: drop-shadow(0 0 0 rgba(105,215,255,0)); } 35% { filter: drop-shadow(0 0 24px rgba(105,215,255,.28)); } 100% { filter: drop-shadow(0 0 0 rgba(105,215,255,0)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .game-card, .game-card::before, .game-card::after, .game-card-icon::after, .game-showcase::before, .game-showcase::after, .crash-visual, .game-result-glow { animation: none !important; transition: none !important; }
+}
