@@ -1,0 +1,30 @@
+name: Package fixed project
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        working-directory: project
+        run: npm ci
+      - name: Build
+        working-directory: project
+        run: npm run build
+      - name: Typecheck
+        working-directory: project
+        run: npm run typecheck
+      - name: Package repository
+        run: zip -r oreobet-fixed.zip . -x '.git/*' 'oreobet-fixed.zip'
+      - name: Upload full project ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: oreobet-fixed
+          path: oreobet-fixed.zip
+          retention-days: 30
