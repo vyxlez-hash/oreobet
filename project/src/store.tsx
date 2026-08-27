@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase } from './lib/supabase';
 import type { PageId, AppUser } from './types';
+import { supabase } from './lib/supabase';
 
 type ModalType = 'auth' | 'deposit' | 'withdraw' | null;
 
@@ -131,11 +131,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // Keep this callback stable across profile updates. The previous dependency on
+  // `user` recreated the callback every time setUser ran, which caused Dashboard
+  // effects to reload continuously and made admin controls flicker/disappear.
   const refreshProfile = useCallback(async () => {
-    if (!user || !session?.user) return;
-    const profile = await fetchProfile(user.id, session.user.email || user.email);
-    if (profile) setUser(profile);
-  }, [fetchProfile, session, user]);
+    if (!session?.user) return;
+    const profile = await fetchProfile(session.user.id, session.user.email || '');
+    if (profile) {
+      setUser((prev) => {
+        if (!prev || prev.id !== profile.id) return profile;
+        return profile;
+      });
+    }
+  }, [fetchProfile, session]);
 
   useEffect(() => {
     let mounted = true;
@@ -160,8 +168,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, s) => {
       if (!mounted) return;
 
-      // Keep the auth callback synchronous. Calling Supabase queries directly
-      // inside onAuthStateChange can deadlock the auth lock during sign-in.
       setSession(s);
 
       if (event === 'SIGNED_OUT' || !s?.user) {
@@ -192,12 +198,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
     const cleanEmail = email.trim().toLowerCase();
-
-    const { data, error } = await supabase.auth.signUp({
-      email: cleanEmail,
-      password,
-    });
-
+    const { data, error } = await supabase.auth.signUp({ email: cleanEmail, password });
     if (error) return { error: error.message };
     if (!data.user) return { error: 'Failed to create account' };
 
@@ -213,7 +214,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showToast('Account created. Check your email to confirm your account, then sign in.');
       setAuthOpen(false);
     }
-
     return { error: null };
   }, [fetchProfile, showToast]);
 
@@ -223,24 +223,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (file.size > 5 * 1024 * 1024) return { error: 'Profile pictures must be 5 MB or smaller.' };
 
     const path = `${user.id}/avatar`;
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(path, file, {
-        upsert: true,
-        contentType: file.type,
-        cacheControl: '3600',
-      });
-
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, {
+      upsert: true, contentType: file.type, cacheControl: '3600',
+    });
     if (uploadError) return { error: uploadError.message };
 
     const { data: publicData } = supabase.storage.from('avatars').getPublicUrl(path);
     const avatarUrl = `${publicData.publicUrl}?v=${Date.now()}`;
-
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ avatar_url: avatarUrl })
-      .eq('id', user.id);
-
+    const { error: updateError } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', user.id);
     if (updateError) return { error: updateError.message };
 
     setUser((prev) => prev ? { ...prev, avatarUrl } : prev);
@@ -251,27 +241,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const saveUsername = useCallback(async (username: string): Promise<{ error: string | null }> => {
     if (!user) return { error: 'You must be signed in.' };
     const cleanUsername = username.trim();
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(cleanUsername)) {
-      return { error: 'Username must be 3-20 characters and use only letters, numbers, or underscores.' };
-    }
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(cleanUsername)) return { error: 'Username must be 3-20 characters and use only letters, numbers, or underscores.' };
 
-    const { data: existing, error: checkError } = await supabase
-      .from('profiles')
-      .select('id')
-      .ilike('username', cleanUsername)
-      .neq('id', user.id)
-      .maybeSingle();
-
+    const { data: existing, error: checkError } = await supabase.from('profiles').select('id').ilike('username', cleanUsername).neq('id', user.id).maybeSingle();
     if (checkError) return { error: checkError.message };
     if (existing) return { error: 'That username is already taken.' };
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ username: cleanUsername, username_chosen: true })
-      .eq('id', user.id)
-      .select('*')
-      .single();
-
+    const { data, error } = await supabase.from('profiles').update({ username: cleanUsername, username_chosen: true }).eq('id', user.id).select('*').single();
     if (error || !data) return { error: error?.message || 'Could not save username.' };
 
     setUser((prev) => prev ? {
@@ -286,33 +262,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { error: null };
   }, [user, showToast]);
 
-
   const signIn = useCallback(async (email: string, password: string): Promise<{ error: string | null }> => {
     const cleanEmail = email.trim().toLowerCase();
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: cleanEmail,
-      password,
-    });
-
+    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
     if (error) {
-      if (error.message.toLowerCase().includes('email not confirmed')) {
-        return { error: 'Please confirm your email before signing in.' };
-      }
+      if (error.message.toLowerCase().includes('email not confirmed')) return { error: 'Please confirm your email before signing in.' };
       return { error: error.message };
     }
+    if (!data.user || !data.session) return { error: 'Login failed: Supabase did not create a session.' };
 
-    if (!data.user || !data.session) {
-      return { error: 'Login failed: Supabase did not create a session.' };
-    }
-
-    // Load the profile immediately so the UI does not have to wait for
-    // the auth-state callback.
     const profile = await fetchProfile(data.user.id, data.user.email || cleanEmail);
-    if (!profile) {
-      return { error: 'Login worked, but your profile could not be loaded. Please try again.' };
-    }
-
+    if (!profile) return { error: 'Login worked, but your profile could not be loaded. Please try again.' };
     setSession(data.session);
     setUser(profile);
     setPage('games');
@@ -320,7 +280,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     showToast('Welcome back!');
     return { error: null };
   }, [fetchProfile, showToast]);
-
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
@@ -331,15 +290,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [showToast]);
 
   return (
-    <AppContext.Provider
-      value={{
-        page, navigate, user, session, authLoading,
-        signUp, signIn, logout, refreshBalance, refreshProfile, updateAvatar, saveUsername,
-        openAuth, closeAuth, isAuthOpen, authMode,
-        openModal, closeModal, activeModal,
-        toast, showToast,
-      }}
-    >
+    <AppContext.Provider value={{
+      page, navigate, user, session, authLoading,
+      signUp, signIn, logout, refreshBalance, refreshProfile, updateAvatar, saveUsername,
+      openAuth, closeAuth, isAuthOpen, authMode,
+      openModal, closeModal, activeModal,
+      toast, showToast,
+    }}>
       {children}
     </AppContext.Provider>
   );
