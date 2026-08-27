@@ -1,0 +1,26 @@
+/* Roulette polish: keep the reel from looking like a black box and prevent
+   accidental horizontal page/reel motion outside an active spin. */
+.roulette-reel-window {
+  background: linear-gradient(135deg, rgba(22, 32, 45, .96), rgba(13, 43, 44, .92));
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, .28), 0 16px 40px rgba(0, 0, 0, .22);
+  isolation: isolate;
+}
+
+.roulette-reel {
+  backface-visibility: hidden;
+  transform-origin: center center;
+}
+
+.roulette-reel:not(.roulette-reel-spin) {
+  animation: none;
+}
+
+.roulette-reel-spin {
+  animation: roulette-accurate-spin 3.5s cubic-bezier(.08, .72, .12, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roulette-reel-spin {
+    animation-duration: .01ms !important;
+  }
+}
